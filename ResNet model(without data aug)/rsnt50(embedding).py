@@ -73,7 +73,7 @@ model = FabricDefectModel(num_classes)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=10):
+def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=25):
     best_val_accuracy = 0.0
 
     for epoch in range(num_epochs):
@@ -135,7 +135,7 @@ def evaluate_model(model, test_loader):
 
     return test_accuracy, test_f1_score
 
-train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=10)
+train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=25)
 
 #Accuracy
 model.load_state_dict(torch.load('best_model.pth'))
