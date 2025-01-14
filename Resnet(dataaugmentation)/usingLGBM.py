@@ -10,6 +10,7 @@ from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader, random_split
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.preprocessing import StandardScaler
+!pip install lightgbm --upgrade
 import lightgbm as lgb
 
 # Mounting data
@@ -107,7 +108,7 @@ params = {
 
 # Train LGBM classifier
 num_round = 100
-bst = lgb.train(params, train_data, num_round, valid_sets=[train_data, val_data], early_stopping_rounds=10)
+bst = lgb.train(params, train_data, num_round, valid_sets=[train_data, val_data],  callbacks=[lgb.early_stopping(stopping_rounds=10)])
 
 # Evaluation of classifier on the test set
 test_preds = bst.predict(test_embeddings)
