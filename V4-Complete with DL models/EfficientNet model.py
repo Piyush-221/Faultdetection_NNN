@@ -12,6 +12,7 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from sklearn.preprocessing import StandardScaler
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline
 
 # Mounting data
 from google.colab import drive
@@ -26,8 +27,8 @@ transform = transforms.Compose([
     transforms.RandomVerticalFlip(),
     transforms.RandomRotation(20),
     transforms.RandomAffine(degrees=0, translate=(0.1, 0.1)),
-    transforms.RandomErasing(),
     transforms.ToTensor(),
+    transforms.RandomErasing(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
@@ -97,20 +98,21 @@ train_labels = train_labels.astype(int)
 val_labels = val_labels.astype(int)
 test_labels = test_labels.astype(int)
 
+# Pipeline
+from sklearn.pipeline import Pipeline #Using a pipeline as GridSearchCV tried to clone the entire CaliberatedClassifierCV, including its internal fitted base_estimator
+from sklearn.svm import SVC
+pipeline = Pipeline([
+    ('base_estimator', SVC(kernel='linear', probability=True))
+])
+
 # Parameter grid for CalibratedClassifierCV
 param_grid = {
     'base_estimator__C': [0.1, 1, 10, 100, 1000],  
-    'method': ['sigmoid', 'isotonic']
 }
 
-# Initializing CalibratedClassifierCV with base estimator (SVC)
-from sklearn.svm import SVC
-base_estimator = SVC(kernel='linear', probability=True)
-
-calibrated_model = CalibratedClassifierCV(base_estimator=base_estimator, cv=3)
 
 # Initialize GridSearchCV
-grid_search = GridSearchCV(estimator=calibrated_model, param_grid=param_grid, cv=3, verbose=1, n_jobs=-1)
+grid_search = GridSearchCV(estimator=pipeline, param_grid=param_grid, cv=3, verbose=1, n_jobs=-1)
 
 # Fit GridSearchCV
 grid_search.fit(train_embeddings, train_labels)
@@ -120,7 +122,7 @@ best_params = grid_search.best_params_
 print(f'Best parameters: {best_params}')
 
 # Train CalibratedClassifierCV with best parameters
-best_calibrated_model = CalibratedClassifierCV(base_estimator=SVC(kernel='linear', C=best_params['base_estimator__C'], probability=True), method=best_params['method'], cv=3)
+best_calibrated_model = CalibratedClassifierCV(SVC(kernel='linear', C=best_params['base_estimator__C'], probability=True), method='sigmoid, cv=3)
 best_calibrated_model.fit(train_embeddings, train_labels)
 
 # Evaluation of classifier on the validation and test sets
